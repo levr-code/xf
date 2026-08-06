@@ -68,7 +68,6 @@ class ReturnValue(Exception):
  
 
 class Environment:
-
     def __init__(self):
         self.data = []
         self.refs = []
@@ -120,7 +119,6 @@ class BaseNode:
 
 
 class ALink:
-
     def __init__(self, addr, env):
         self.__env = env
         self.__addr = addr
@@ -153,7 +151,6 @@ class ALink:
 
 
 class Node(BaseNode):
-
     def __init__(self, args, env):
         self.args = args
         self.env = env
@@ -163,7 +160,6 @@ class Node(BaseNode):
 
 
 class Literal(BaseNode):
-
     def __init__(self, val=None, env=None):
         self._val = val
         self._env = env
@@ -255,14 +251,13 @@ def convert_to_links(a, env):
 
 
 def ast1(code, env: Environment): # not ai, all those comments are mine
-
     program = []
-    for j in parse(code, "\n"):  # iteratin throw splitted by logical newlines code
+    for j in parse(code, "\n"):  # iterating over  splitted by logical newlines code
         sp = j.split(':')  # splitting by the : to get the body and the arg(all the sp[1:] will be resplitted)
         name = sp[0]  # getting the command
         args = parse(":".join(sp[1:]), ',')  # resplitting the args
         for i, arg in enumerate(args):
-            if arg.startswith("${") and arg[-1] == '}':  # the dinamic placeholder substitution
+            if arg.startswith("${") and arg[-1] == '}':  # the dynamic placeholder substitution
                 args[i] = ast1(arg[2:-1], env)  # calling the full ast on the code part(in python it is something like (lambda: something)())
             elif arg.startswith(('{', '[')) and arg[-1] in {'}', ']'}:  # startswith is a safe way to check does the line start with something,
                 # also it is slower, thats why i use arg[-1] 
@@ -331,7 +326,16 @@ def add(env: Environment, args):
 @Code.register('echo')
 def echo(env, args):
     print(*args)
-
+@Code.register('import')
+def def_func(env, args):
+    """
+        e = Environment()
+        with open(sys.argv[1].strip(), 'r', encoding='utf-8') as theFile:
+            a = ast1(theFile.read(), e)
+        print(a.run())
+    """
+    with open(args[0].as_literal(), 'r', encoding='utf-8') as impFile:
+        return ast1(impFile.read(), env).run()
 
 @Code.register('def')
 def def_func(env, args):
